@@ -2,19 +2,25 @@ import React from "react";
 import { Box, Button, Grid, Avatar } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import socket from "../utils/socket";
 
 function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    socket.onmessage = (e) => {
+      console.log(JSON.parse(e.data));
+    };
+  }, []);
+
   const handleClick = () => {
-    // socket.emit("createRoom", (response) => {
-    //   if (response.success) {
-    //     navigate(`/room/${response.entryCode}`);
-    //   } else {
-    //     console.error("Error creating room:", response.error);
-    //   }
-    // });
+    console.log("clicked");
+    try {
+      socket.send(JSON.stringify({ message: "clicked button" }));
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const handleJoin = () => {
