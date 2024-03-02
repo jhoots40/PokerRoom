@@ -45,14 +45,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'testchat',
+    'core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # <-- This line should be before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -130,3 +131,38 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+FORMATTERS = {
+    "simple": {
+        "format": "{levelname} {asctime:s} {module} {filename} {lineno:d} {funcName} {message}",
+        "style": "{",
+    }
+}
+
+HANDLERS = {
+    "console_handler": {
+        "class": "logging.StreamHandler",
+        "formatter": "simple",
+    }
+}
+
+LOGGERS = {
+    "django": {
+        "handlers": ["console_handler"],
+        "level": "INFO",
+        "propagate": False,
+    }
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": FORMATTERS,
+    "handlers": HANDLERS,
+    "loggers": LOGGERS,
+}
+
+AUTH_USER_MODEL = 'core.CustomUser'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+

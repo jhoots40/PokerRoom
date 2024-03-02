@@ -1,0 +1,13 @@
+.main-container {
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(
+    70,
+    70,
+    70
+  ); /* Replace with your desired RGB color values */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}

@@ -61,7 +61,9 @@ function Register() {
     };
 
     axios
-      .post("http://localhost:5000/api/users/register", data)
+      .post("http://localhost:8000/auth/register/", data, {
+        withCredentials: true, // Include credentials in the request
+      })
       .then((response) => {
         console.log(response.data);
 

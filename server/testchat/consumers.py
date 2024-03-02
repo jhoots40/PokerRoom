@@ -1,5 +1,7 @@
-import json
+import json, logging
 from channels.generic.websocket import WebsocketConsumer
+
+logger = logging.getLogger("django")
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -12,11 +14,9 @@ class ChatConsumer(WebsocketConsumer):
         pass
 
     def receive(self, text_data):
-        print("made it here")
+        logger.info('client sent:')
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
-
-        print('message:', message)
 
         self.send(text_data=json.dumps({
             'message': message

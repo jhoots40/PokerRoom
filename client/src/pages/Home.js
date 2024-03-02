@@ -1,18 +1,50 @@
 import React from "react";
-import { Box, Button, Grid, Avatar } from "@mui/material";
+import { Button, Avatar } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../utils/socket";
+import "./Home.css";
+import axios from "axios";
 
 function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    socket.onmessage = (e) => {
-      console.log(JSON.parse(e.data));
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const config = {
+      withCredentials: true,
+      signal,
     };
+
+    axios
+      .get("http://localhost:8000/auth/userInfo/", config)
+      .then((response) => {
+        setUser(response.data);
+      })
+      .catch((error) => {
+        if (axios.isCancel(error)) {
+          console.log("Request canceled:", error.message);
+        } else if (
+          error.response.status === 401 ||
+          error.response.status === 403
+        ) {
+          console.log("Unauthorized");
+          navigate("/login");
+        } else {
+          console.error("Error:", error);
+        }
+      });
+
+    return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      console.log(user);
+    }
+  }, [user]);
 
   const handleClick = () => {
     console.log("clicked");
@@ -24,7 +56,7 @@ function Home() {
   };
 
   const handleJoin = () => {
-    navigate("/join");
+    setUser("testing");
   };
 
   const handleRooms = () => {
@@ -32,53 +64,42 @@ function Home() {
   };
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      style={{ height: "100vh", backgroundColor: "rgb(70, 70, 70)" }}
-    >
-      <Grid container direction="column" alignItems="center" spacing={2}>
-        <Grid item>
-          <Avatar
-            sx={{
-              bgcolor: "#0277bd",
-              borderColor: "#141414 !important",
-              border: 5,
-              width: 100,
-              height: 100,
-            }}
-          >{`${user?.username}`}</Avatar>
-        </Grid>
-        <Grid item>
-          <Button
-            color="customDarkGrey"
-            variant="contained"
-            onClick={handleRooms}
-          >
-            Active Rooms
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            color="customDarkGrey"
-            variant="contained"
-            onClick={handleClick}
-          >
-            Create
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            color="customDarkGrey"
-            variant="contained"
-            onClick={handleJoin}
-          >
-            Join Room
-          </Button>
-        </Grid>
-      </Grid>
-    </Box>
+    <div className="main-container">
+      <Avatar
+        sx={{
+          bgcolor: "#0277bd",
+          borderColor: "#141414 !important",
+          border: 5,
+          width: 100,
+          height: 100,
+          p: 0.5,
+        }}
+      >{`${user?.username}`}</Avatar>
+      <Button
+        sx={{ m: 0.5 }}
+        variant="contained"
+        color="customDarkGrey"
+        onClick={handleRooms}
+      >
+        Active Rooms
+      </Button>
+      <Button
+        sx={{ m: 0.5 }}
+        variant="contained"
+        color="customDarkGrey"
+        onClick={handleClick}
+      >
+        Create
+      </Button>
+      <Button
+        sx={{ m: 0.5 }}
+        variant="contained"
+        color="customDarkGrey"
+        onClick={handleJoin}
+      >
+        Join Room
+      </Button>
+    </div>
   );
 }
 

@@ -14,29 +14,27 @@ function Login() {
   const handleSubmit = (e) => {
     e.preventDefault(); // Prevent the default form submission behavior
 
-    const data = {
-      username: username,
-      password: password,
-    };
-
-    axios
-      .get("http://localhost:8000/auth/login", {
-        withCredentials: true,
-      })
+    // const data = {
+    //   username: username,
+    //   password: password,
+    // };
+    const response = axios
+      .post(
+        "http://localhost:8000/auth/login/",
+        {
+          username: username,
+          password: password,
+        },
+        {
+          withCredentials: true, // Include credentials in the request
+        }
+      )
       .then((response) => {
         console.log(response.data);
         navigate("/");
       })
       .catch((error) => {
-        // Handle errors
-        if (error.response) {
-          // The server responded with a status code outside of the 2xx range
-          console.error("Server Error:", error.response.data);
-          setError("Invalid username or password");
-        } else {
-          // Something happened in setting up the request
-          console.error("Error:", error.message);
-        }
+        console.error("Login failed:", error.response.data.error);
       });
   };
 
