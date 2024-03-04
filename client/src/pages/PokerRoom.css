@@ -1,0 +1,36 @@
+.container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-width: 850px;
+  min-height: 700px;
+  z-index: 0;
+  border: 1px solid black;
+}
+
+.poker-table {
+  position: absolute;
+  width: 100%;
+  height: 80%;
+  z-index: 1;
+  border: 1px solid green;
+}
+
+.chat-box {
+  position: absolute;
+  width: 30%;
+  height: 20%;
+  bottom: 0;
+  z-index: 1;
+  border: 1px solid red;
+}
+
+.action-box {
+  position: absolute;
+  width: 70%;
+  height: 20%;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  border: 1px solid blue;
+}

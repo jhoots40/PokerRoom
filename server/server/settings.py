@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-    'testchat',
     'core.apps.CoreConfig',
 ]
 
@@ -165,4 +164,10 @@ LOGGING = {
 AUTH_USER_MODEL = 'core.CustomUser'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # Use appropriate channel layer backend
+    },
+}
 

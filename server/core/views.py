@@ -1,15 +1,14 @@
 from django.shortcuts import render, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
 import logging, json
 from django.http import JsonResponse
-from core.models import CustomUser
+from core.models import CustomUser, Room
 from utils.db_connection import MongoDBConnection
 from django.contrib.auth import authenticate, login
-from django.shortcuts import redirect
 from middleware.authMiddleware import custom_auth_required
 from django.contrib.auth.hashers import make_password
+from .serializers import RoomSerializer
 
 # Create an instance of MongoDBConnection
 mongo_connection = MongoDBConnection()
@@ -108,3 +107,17 @@ def userInfo(request):
     }
     
     return JsonResponse(user_info)
+
+
+@csrf_exempt    
+@custom_auth_required
+def roomInfo(request):
+    user = request.user
+    # Now 'user' contains the authenticated user object
+    logger.info(f"Received request for rooms for user: {user.username}")
+
+    rooms = Room.objects.all()
+
+    serializer = RoomSerializer(rooms, many=True)
+    
+    return JsonResponse(serializer.data, safe=False)

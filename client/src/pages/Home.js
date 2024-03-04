@@ -2,43 +2,38 @@ import React from "react";
 import { Button, Avatar } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import socket from "../utils/socket";
 import "./Home.css";
 import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 
 function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-    const config = {
-      withCredentials: true,
-      signal,
-    };
-
-    axios
-      .get("http://localhost:8000/auth/userInfo/", config)
-      .then((response) => {
+  const { isLoading, isError, error } = useQuery({
+    queryKey: ["userInfo"],
+    queryFn: async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/auth/userInfo/",
+          {
+            withCredentials: true,
+          }
+        );
         setUser(response.data);
-      })
-      .catch((error) => {
-        if (axios.isCancel(error)) {
-          console.log("Request canceled:", error.message);
-        } else if (
-          error.response.status === 401 ||
-          error.response.status === 403
-        ) {
+        return response.data; // Make sure to return data
+      } catch (error) {
+        if (error.response && error.response.status === 403) {
           console.log("Unauthorized");
           navigate("/login");
         } else {
           console.error("Error:", error);
         }
-      });
-
-    return () => controller.abort();
-  }, []);
+        throw new Error(error); // Rethrow the error
+      }
+    },
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
     if (user) {
@@ -46,22 +41,14 @@ function Home() {
     }
   }, [user]);
 
-  const handleClick = () => {
-    console.log("clicked");
-    try {
-      socket.send(JSON.stringify({ message: "clicked button" }));
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleJoin = () => {
-    setUser("testing");
-  };
+  const handleJoin = () => {};
 
   const handleRooms = () => {
     navigate("/rooms");
   };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error: {error.message}</div>;
 
   return (
     <div className="main-container">
@@ -83,12 +70,7 @@ function Home() {
       >
         Active Rooms
       </Button>
-      <Button
-        sx={{ m: 0.5 }}
-        variant="contained"
-        color="customDarkGrey"
-        onClick={handleClick}
-      >
+      <Button sx={{ m: 0.5 }} variant="contained" color="customDarkGrey">
         Create
       </Button>
       <Button

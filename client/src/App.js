@@ -2,6 +2,8 @@ import React from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Room from "./pages/Room";
+import PokerRoom from "./pages/PokerRoom";
 import { Routes, Route } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
@@ -46,6 +48,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/rooms" element={<Room />} />
+          <Route path="/pokerroom/:entry_code" element={<PokerRoom />} />
         </Routes>
       </CssBaseline>
     </ThemeProvider>
