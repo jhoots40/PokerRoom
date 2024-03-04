@@ -3,12 +3,18 @@ import { useState, useRef, useEffect } from "react";
 import { Grid, TextField, Paper, useTheme } from "@mui/material";
 import MessageBubble from "./MessageBubble";
 
-const ChatBox = ({ chatMessages }) => {
+const ChatBox = ({ chatMessages, socket }) => {
   const [message, setMessage] = useState("");
   const theme = useTheme();
   const containerRef = useRef();
 
-  const handleSubmit = (event) => {};
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (message.trim() === "") return;
+    // Send message to server
+    socket.send(JSON.stringify({ message: message }));
+    setMessage("");
+  };
 
   useEffect(() => {
     containerRef.current.scrollTop = containerRef.current.scrollHeight;
