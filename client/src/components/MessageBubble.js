@@ -14,10 +14,10 @@ const MessageBubble = ({ message }) => {
       sx={{ padding: "4px" }}
     >
       <>
-        <Grid item sx={{ border: 1, borderColor: "purple" }}>
+        <Grid item>
           <Avatar sx={{ width: "21px", height: "21px" }}></Avatar>
         </Grid>
-        <Grid item sx={{ border: 1, borderColor: "red" }}>
+        <Grid item>
           <Typography
             sx={{ ml: "10px", fontWeight: "bold", fontSize: 13 }}
             color={
@@ -29,7 +29,7 @@ const MessageBubble = ({ message }) => {
             {message.username + ":"}
           </Typography>
         </Grid>
-        <Grid item sx={{ border: 1, borderColor: "red" }}>
+        <Grid item>
           <Typography
             sx={{ ml: "4px", wordWrap: "break-word", fontSize: 13 }}
             color={theme.palette.primary.contrastText}

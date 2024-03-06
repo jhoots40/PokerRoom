@@ -20,6 +20,7 @@ function Home() {
             withCredentials: true,
           }
         );
+        console.log("Loaded user info");
         setUser(response.data);
         return response.data; // Make sure to return data
       } catch (error) {
@@ -34,12 +35,6 @@ function Home() {
     },
     refetchOnWindowFocus: false,
   });
-
-  useEffect(() => {
-    if (user) {
-      console.log(user);
-    }
-  }, [user]);
 
   const handleJoin = () => {};
 

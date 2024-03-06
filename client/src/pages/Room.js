@@ -43,6 +43,35 @@ function Room() {
   const [user, setUser] = useState(null);
   const theme = useTheme();
   const [rooms, setRooms] = useState([]);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+
+  const createRoom = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/auth/createRoom/",
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+      navigate(`/pokerroom/${response.data.entry_code}`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.status === 403) {
+        console.log("Unauthorized");
+        navigate("/login");
+      } else {
+        console.error("Error:", error);
+      }
+    }
+  };
+
+  const { data, refetch } = useQuery({
+    queryKey: ["createRoom"],
+    queryFn: createRoom,
+    enabled: false,
+    refetchOnWindowFocus: false,
+  });
 
   const { isLoading, isError, error } = useQuery({
     queryKey: ["userInfo"],
@@ -185,11 +214,9 @@ function Room() {
           <Button
             color="customDarkGrey"
             variant="contained"
-            onClick={() => {
-              console.log("Pointless Button");
-            }}
+            onClick={() => refetch()}
           >
-            Fetch Rooms
+            Create
           </Button>
         </Grid>
       </Grid>

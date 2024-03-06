@@ -14,7 +14,7 @@ function PokerRoom() {
   const [chatMessages, setChatMessages] = useState([]);
   const [user, setUser] = useState(null);
 
-  useQuery({
+  const { isFetching } = useQuery({
     queryKey: ["userInfo"],
     queryFn: async () => {
       try {
@@ -34,7 +34,7 @@ function PokerRoom() {
         } else {
           console.error("Error:", error);
         }
-        throw new Error(error); // Rethrow the error
+        return new Error(error); // Rethrow the error
       }
     },
     refetchOnWindowFocus: false,
@@ -42,7 +42,10 @@ function PokerRoom() {
 
   useEffect(() => {
     // Connect to WebSocket when component mounts
-    const websocketURL = `ws://localhost:8000/ws/chat/${entry_code}/`; // Replace with your WebSocket server URL
+    if (isFetching || user == null) return;
+    const websocketURL = `ws://localhost:8000/ws/chat/${entry_code}/?username=${encodeURIComponent(
+      user.username
+    )}`;
     const newSocket = new WebSocket(websocketURL);
     setSocket(newSocket);
 
@@ -50,15 +53,13 @@ function PokerRoom() {
     return () => {
       newSocket.close();
     };
-  }, [entry_code]);
+  }, [entry_code, isFetching]);
 
   useEffect(() => {
     if (!socket) return;
 
     const messageListener = (event) => {
       const data = JSON.parse(event.data);
-      console.log(user);
-      console.log(data);
       // Generate a unique key for the message
       const messageKey = new Date().toISOString(); // You can use a more sophisticated method if needed
 
@@ -95,6 +96,10 @@ function PokerRoom() {
     console.log(chatMessages);
   }, [chatMessages]);
 
+  if (isFetching) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="container">
       <div className="poker-table">
@@ -102,7 +107,7 @@ function PokerRoom() {
           variant="contained"
           color="primary"
           onClick={() => {
-            navigate("/");
+            navigate("/rooms");
           }}
         >
           Leave

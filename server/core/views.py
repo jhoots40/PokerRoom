@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login
 from middleware.authMiddleware import custom_auth_required
 from django.contrib.auth.hashers import make_password
 from .serializers import RoomSerializer
+import random
 
 # Create an instance of MongoDBConnection
 mongo_connection = MongoDBConnection()
@@ -121,3 +122,23 @@ def roomInfo(request):
     serializer = RoomSerializer(rooms, many=True)
     
     return JsonResponse(serializer.data, safe=False)
+
+
+@csrf_exempt    
+@custom_auth_required
+def createRoom(request):
+    user = request.user
+    # Now 'user' contains the authenticated user object
+    logger.info(f"Received request for creating a room: {user.username}")
+
+    # Generate a random 4-digit integer
+    random_number = random.randint(0, 9999)
+
+    # Format the integer to have leading zeros if necessary
+    formatted_random_number = '{:04d}'.format(random_number)  
+    logger.info(f"Generated room code: {formatted_random_number}")  
+
+    new_room = Room.objects.create(entry_code=formatted_random_number)
+    new_room.save()
+    
+    return JsonResponse({'entry_code': formatted_random_number})
