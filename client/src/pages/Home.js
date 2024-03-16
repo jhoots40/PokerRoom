@@ -20,7 +20,7 @@ function Home() {
             withCredentials: true,
           }
         );
-        console.log("Loaded user info");
+        console.log("Loaded user info", response.data);
         setUser(response.data);
         return response.data; // Make sure to return data
       } catch (error) {

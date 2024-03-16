@@ -5,7 +5,17 @@ import "./PokerRoom.css";
 import ChatBox from "../components/ChatBox";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@mui/material";
+import { Button, Box } from "@mui/material";
+import PokerSeat from "../components/PokerSeat";
+
+const seats = [
+  { id: 0, top: "75%", left: "50%" },
+  //{ id: 1, top: "65%", left: "85%" },
+  //{ id: 2, top: "20%", left: "85%" },
+  { id: 3, top: "10%", left: "50%" },
+  //{ id: 4, top: "20%", left: "15%" },
+  //{ id: 5, top: "65%", left: "15%" },
+];
 
 function PokerRoom() {
   const [socket, setSocket] = useState(null);
@@ -24,7 +34,7 @@ function PokerRoom() {
             withCredentials: true,
           }
         );
-        console.log(response.data);
+        console.log("Loaded user info", response.data);
         setUser(response.data);
         return response.data; // Make sure to return data
       } catch (error) {
@@ -47,7 +57,7 @@ function PokerRoom() {
       user.username
     )}`;
     const newSocket = new WebSocket(websocketURL);
-    setSocket(newSocket);
+    if (newSocket) setSocket(newSocket);
 
     // Cleanup function to close WebSocket connection when component unmounts
     return () => {
@@ -79,8 +89,22 @@ function PokerRoom() {
       console.log("WebSocket connected");
     };
 
+    socket.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+      navigate("/rooms");
+    };
+
     // Listen for messages
-    socket.addEventListener("message", messageListener);
+    socket.addEventListener("message", function (event) {
+      var messageData = JSON.parse(event.data);
+      if (messageData.type === "chat_message") {
+        // Handle chat message
+        messageListener(event);
+      } else if (messageData.type === "game_update") {
+        // Handle game update message
+        console.log("Received game update:", messageData.gameUpdate);
+      }
+    });
 
     // Connection opened
     socket.addEventListener("open", openListener);
@@ -91,26 +115,53 @@ function PokerRoom() {
     };
   }, [socket, user]);
 
-  useEffect(() => {
-    if (chatMessages.length === 0) return;
-    console.log(chatMessages);
-  }, [chatMessages]);
-
   if (isFetching) {
     return <div>Loading...</div>;
   }
 
+  const renderSeats = () => {
+    return seats.map((s) => {
+      return (
+        <Box
+          key={s.id}
+          sx={{
+            position: "absolute",
+            width: "150px",
+            height: "150px",
+            border: `5px solid black`,
+            transform: "translate(-50%, -50%)",
+            top: s.top,
+            left: s.left,
+          }}
+        >
+          <PokerSeat name={user.username} />
+        </Box>
+      );
+    });
+  };
+
   return (
     <div className="container">
+      {renderSeats()}
       <div className="poker-table">
         <Button
           variant="contained"
           color="primary"
-          onClick={() => {
+          onClick={async () => {
+            await socket.close();
             navigate("/rooms");
           }}
         >
           Leave
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={async () => {
+            socket.send(JSON.stringify({ type: "ready" }));
+          }}
+        >
+          Ready?
         </Button>
       </div>
       <div className="chat-box">

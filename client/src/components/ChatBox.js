@@ -12,7 +12,9 @@ const ChatBox = ({ chatMessages, socket }) => {
     event.preventDefault();
     if (message.trim() === "") return;
     // Send message to server
-    socket.send(JSON.stringify({ message: `${message}` }));
+    socket.send(
+      JSON.stringify({ type: "chat_message", message: `${message}` })
+    );
     setMessage("");
   };
 

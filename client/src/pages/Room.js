@@ -108,7 +108,6 @@ function Room() {
             withCredentials: true,
           }
         );
-        console.log(response.data);
         setRooms(response.data);
         return response.data; // Make sure to return data
       } catch (error) {
@@ -126,7 +125,7 @@ function Room() {
 
   useEffect(() => {
     if (user) {
-      console.log(user);
+      console.log("Loaded user info", user);
     }
   }, [user]);
 

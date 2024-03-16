@@ -173,3 +173,9 @@ CHANNEL_LAYERS = {
 
 SESSION_COOKIE_SECURE = True
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+

@@ -10,6 +10,7 @@ from middleware.authMiddleware import custom_auth_required
 from django.contrib.auth.hashers import make_password
 from .serializers import RoomSerializer
 import random
+from django.core.cache import cache
 
 # Create an instance of MongoDBConnection
 mongo_connection = MongoDBConnection()
@@ -137,6 +138,13 @@ def createRoom(request):
     # Format the integer to have leading zeros if necessary
     formatted_random_number = '{:04d}'.format(random_number)  
     logger.info(f"Generated room code: {formatted_random_number}")  
+
+    data = {
+        "players": [],
+        "ready": [],
+    }
+
+    cache.set(formatted_random_number, data)
 
     new_room = Room.objects.create(entry_code=formatted_random_number)
     new_room.save()

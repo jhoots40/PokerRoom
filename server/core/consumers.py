@@ -4,6 +4,9 @@ from urllib.parse import parse_qs
 import asyncio
 from asgiref.sync import sync_to_async
 from .models import CustomUser, Room
+from django.core.cache import cache
+from pokerkit import NoLimitTexasHoldem
+from .pokerLogic import *
 
 logger = logging.getLogger("django")
 
@@ -11,18 +14,32 @@ lock = asyncio.Lock()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        # Get the room name and username from the URL
         self.room_name = self.scope['url_route']['kwargs']['entry_code']
         self.room_group_name = 'chat_%s' % self.room_name
-
         username = self.scope['query_string'].decode('utf-8')
-        username = parse_qs(username).get('username', [None])[0]
-        self.username = username
+        self.username = parse_qs(username).get('username', [None])[0]
         logger.info(f"Socket Got Username: {self.username}")
 
-        user = await sync_to_async(CustomUser.objects.get)(username=username)
+        # Get the user and room from the database
+        user = await sync_to_async(CustomUser.objects.get)(username=self.username)
+
+        # add the user to the room
         user.room = await sync_to_async(Room.objects.get)(entry_code=self.room_name)
 
+        # if no room close connection
+        if user.room is None:
+            self.close()
+            return
+
+        # save the user now that he is in the room
         await sync_to_async(user.save)()
+
+        # add the user to the room in the cache
+        room_info = cache.get(self.room_name)
+        if room_info is not None:
+            room_info['players'].append(self.username)
+        cache.set(self.room_name, room_info)
 
         # Join room group
         await self.channel_layer.group_add(
@@ -53,9 +70,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         username = self.username
-        message = text_data_json['message']
 
-        async with lock:
+        type = text_data_json['type']
+
+        if type == 'ready':
+            logger.info("Received ready message")
+
+            # generate new game state
+            if generate_game_state(self.room_name):
+                logger.info(f"Generated game state for room {self.room_name}")
+            else:
+                logger.error(f"Failed to generate game state for room {self.room_name}")
+                self.close()
+                return
+            
+            # starting actions for the hand
+            status = await automate_animations(self.channel_layer, self.room_name)
+
+            # error handling
+            if status:
+                logger.info("Ready!!")
+            else:
+                logger.error("Something went wrong in the ready action")
+        elif type == 'chat_message':
+            logger.info("Received chat message")
+
+            message = text_data_json['message']
             # Send message to room group
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -65,6 +105,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'username': username
                 }
             )
+        elif type == 'game_update':
+            logger.info("Received game update message")
+        else:
+            logger.error("Received unknown message type")
+            return
+        
+
+       
+
+        #async with lock:
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -73,6 +123,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
+            'type': 'chat_message',
             'message': message,
             'username': username
+        }))
+
+    async def game_update(self, event):
+        message = event['message']
+        room_info = event['room_info']
+        # Send the message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'game_update',
+            'gameUpdate': message,
+            'roomInfo': room_info,
         }))
