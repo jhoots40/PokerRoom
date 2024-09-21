@@ -38,7 +38,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # add the user to the room in the cache
         room_info = cache.get(self.room_name)
         if room_info is not None:
-            room_info['players'].append(self.username)
+            new_player = {
+                "username": self.username,
+                "ready": False
+            }
+            logger.info(new_player)
+            room_info['players'].append(new_player)
         cache.set(self.room_name, room_info)
 
         # Join room group
@@ -47,12 +52,43 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+        # notify the room that somebody has joined
+        await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'room_update',
+                    'message': f"{self.username} has just joined the room",
+                    'room_info': room_info
+                }
+            )
+
         await self.accept()
 
     async def disconnect(self, close_code):
         user = await sync_to_async(CustomUser.objects.get)(username=self.username)
         user.room = None
         await sync_to_async(user.save)()
+
+        room_info = cache.get(self.room_name)
+        players = room_info['players']
+        for i in range(len(players)):
+            player = players[i]
+            logger.info(player)
+            if player['username'] == self.username:
+                del players[i]
+                break
+        cache.set(self.room_name, room_info)
+        
+
+        # notify the room that somebody has left
+        await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'room_update',
+                    'message': f"{self.username} has just joined the room",
+                    'room_info': room_info
+                }
+            )
 
         room = await sync_to_async(Room.objects.get)(entry_code=self.room_name)
         user_count = await sync_to_async(room.users.count)()
@@ -76,7 +112,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if type == 'ready':
             logger.info("Received ready message")
 
-            # generate new game state
+            room_info = cache.get(self.room_name)
+
+            players = room_info['players']
+            for player in players:
+                if player['username'] == self.username:
+                    logger.info("FOUND PLAYER")
+                    player['ready'] = not player['ready']
+
+            cache.set(self.room_name, room_info)
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'ready_update',
+                    'message': f"{self.username} is ready",
+                    'room_info': room_info
+                }
+            )
+
+            """ # generate new game state
             if generate_game_state(self.room_name):
                 logger.info(f"Generated game state for room {self.room_name}")
             else:
@@ -91,7 +146,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if status:
                 logger.info("Ready!!")
             else:
-                logger.error("Something went wrong in the ready action")
+                logger.error("Something went wrong in the ready action") """
         elif type == 'chat_message':
             logger.info("Received chat message")
 
@@ -137,3 +192,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'gameUpdate': message,
             'roomInfo': room_info,
         }))
+
+    async def room_update(self, event):
+        message = event['message']
+        room_info = event['room_info']
+        await self.send(text_data=json.dumps({
+            'type': 'room_update',
+            'gameUpdate': message,
+            'roomInfo': room_info,
+        }))
+
+    async def ready_update(self, event):
+        message = event['message']
+        room_info = event['room_info']
+        await self.send(text_data=json.dumps({
+            'type': 'ready_update',
+            'gameUpdate': message,
+            'roomInfo': room_info,
+        }))
+

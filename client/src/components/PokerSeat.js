@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import { Box, Avatar, Paper, useTheme, Grid, Typography } from "@mui/material";
 //import PlayingCard from "./PlayingCard";
 
-const PokerSeat = ({ name }) => {
-  if (name)
+const PokerSeat = ({ player }) => {
+  if (player)
     return (
       <Box
         sx={{
@@ -14,7 +14,7 @@ const PokerSeat = ({ name }) => {
           top: 0, // Set top to 0 to make the top of the box touch the top of the container
           left: 0,
           //transform: "translate(50%, 0%)", // Center the box horizontally
-          //border: `2px solid green`,
+          border: player.ready ? `5px solid green`: `5px solid black`,
           zIndex: 1,
         }}
       >
@@ -26,11 +26,11 @@ const PokerSeat = ({ name }) => {
             left: 0,
             width: "100%",
             height: "100%",
-            bgcolor: `${name ? "#0277bd" : ""}`,
+            bgcolor: `${player.username ? "#0277bd" : ""}`,
             color: "white",
           }}
         >
-          {name}
+          {player.username}
         </Avatar>
       </Box>
     );

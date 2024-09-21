@@ -28,7 +28,7 @@ def userLogin(request):
             password = data.get('password')
 
             # Now you can use username and password as needed
-            logger.info(f"Received login request for username: {username}")
+            logger.info(f"Received login request for username: {username} {password}")
 
             # Authenticate the user
             user = authenticate(request, username=username, password=password)
@@ -141,7 +141,6 @@ def createRoom(request):
 
     data = {
         "players": [],
-        "ready": [],
     }
 
     cache.set(formatted_random_number, data)

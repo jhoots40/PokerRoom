@@ -10,11 +10,11 @@ import PokerSeat from "../components/PokerSeat";
 
 const seats = [
   { id: 0, top: "75%", left: "50%" },
-  //{ id: 1, top: "65%", left: "85%" },
-  //{ id: 2, top: "20%", left: "85%" },
+  { id: 1, top: "65%", left: "85%" },
+  { id: 2, top: "20%", left: "85%" },
   { id: 3, top: "10%", left: "50%" },
-  //{ id: 4, top: "20%", left: "15%" },
-  //{ id: 5, top: "65%", left: "15%" },
+  { id: 4, top: "20%", left: "15%" },
+  { id: 5, top: "65%", left: "15%" },
 ];
 
 function PokerRoom() {
@@ -23,6 +23,7 @@ function PokerRoom() {
   const navigate = useNavigate();
   const [chatMessages, setChatMessages] = useState([]);
   const [user, setUser] = useState(null);
+  const [roomInfo, setRoomInfo] = useState(null);
 
   const { isFetching } = useQuery({
     queryKey: ["userInfo"],
@@ -99,10 +100,18 @@ function PokerRoom() {
       var messageData = JSON.parse(event.data);
       if (messageData.type === "chat_message") {
         // Handle chat message
+        console.log("Received message update:", messageData);
         messageListener(event);
       } else if (messageData.type === "game_update") {
         // Handle game update message
-        console.log("Received game update:", messageData.gameUpdate);
+        console.log("Received game update:", messageData);
+        setRoomInfo(messageData.roomInfo);
+      } else if (messageData.type === "room_update") {
+        console.log("Received room update:", messageData);
+        setRoomInfo(messageData.roomInfo);
+      } else if (messageData.type === "ready_update") {
+        console.log("Received ready update:", messageData);
+        setRoomInfo(messageData.roomInfo);
       }
     });
 
@@ -120,6 +129,7 @@ function PokerRoom() {
   }
 
   const renderSeats = () => {
+    var players = roomInfo?.players;
     return seats.map((s) => {
       return (
         <Box
@@ -128,13 +138,12 @@ function PokerRoom() {
             position: "absolute",
             width: "150px",
             height: "150px",
-            border: `5px solid black`,
             transform: "translate(-50%, -50%)",
             top: s.top,
             left: s.left,
           }}
         >
-          <PokerSeat name={user.username} />
+          <PokerSeat player={players?.[s.id]} />
         </Box>
       );
     });

@@ -11,7 +11,7 @@ class CustomUser(AbstractUser):
     # Add custom fields here
     age = models.PositiveIntegerField(blank=True, null=True)
     balance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='users', null=True, blank=True)
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, related_name='users', null=True, blank=True)
 
     class Meta:
         # Provide a unique related name for the groups field
