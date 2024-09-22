@@ -40,7 +40,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if room_info is not None:
             new_player = {
                 "username": self.username,
-                "ready": False
+                "ready": False,
+                "buy_in": 1000,
+                "bet": 0,
+                "stack": 1000,
+                "hole_cards": ""
             }
             logger.info(new_player)
             room_info['players'].append(new_player)
@@ -95,6 +99,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"User count: {user_count}")
         if user_count == 0:
             await sync_to_async(room.delete)()
+            cache.delete(self.room_name)
 
         
         # Leave room group
@@ -117,9 +122,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
             players = room_info['players']
             for player in players:
                 if player['username'] == self.username:
-                    logger.info("FOUND PLAYER")
                     player['ready'] = not player['ready']
 
+            cache.set(self.room_name, room_info)
+
+            
+            start = True
+
+            # if all players are ready start game
+            for player in players:
+                if player['ready'] == False:
+                    start = False
+                    break
+
+            if start and len(players) > 1: room_info['all_players_ready'] = True
             cache.set(self.room_name, room_info)
 
             await self.channel_layer.group_send(
@@ -130,23 +146,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'room_info': room_info
                 }
             )
-
-            """ # generate new game state
-            if generate_game_state(self.room_name):
-                logger.info(f"Generated game state for room {self.room_name}")
-            else:
-                logger.error(f"Failed to generate game state for room {self.room_name}")
-                self.close()
-                return
+                
+            if start and len(players) > 1:
+                # generate new game state
+                if generate_game_state(self.room_name):
+                    logger.info(f"Generated game state for room {self.room_name}")
+                else:
+                    logger.error(f"Failed to generate game state for room {self.room_name}")
+                    self.close()
+                    return
             
-            # starting actions for the hand
-            status = await automate_animations(self.channel_layer, self.room_name)
+                # starting actions for the hand
+                status = await automate_animations(self.channel_layer, self.room_name)
 
-            # error handling
-            if status:
-                logger.info("Ready!!")
-            else:
-                logger.error("Something went wrong in the ready action") """
+                # error handling
+                if status:
+                    logger.info("Ready!!")
+                else:
+                    logger.error("Something went wrong in the ready action")
         elif type == 'chat_message':
             logger.info("Received chat message")
 
@@ -179,35 +196,60 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'type': 'chat_message',
-            'message': message,
+            'gameUpdate': message,
             'username': username
         }))
 
     async def game_update(self, event):
         message = event['message']
         room_info = event['room_info']
+
+        data = {
+            "players": room_info['players'],
+            "gameState": "Updated game state",
+            "allPlayersReady": room_info['all_players_ready'],
+            "turnIndex": room_info['turn_index']
+        }
+
         # Send the message to WebSocket
         await self.send(text_data=json.dumps({
             'type': 'game_update',
             'gameUpdate': message,
-            'roomInfo': room_info,
+            'roomInfo': data,
         }))
 
     async def room_update(self, event):
         message = event['message']
         room_info = event['room_info']
+
+        data = {
+            "players": room_info['players'],
+            "gameState": "Updated game state",
+            "allPlayersReady": room_info['all_players_ready'],
+            "turnIndex": room_info['turn_index']
+        }
+
+        # Send the message to WebSocket
         await self.send(text_data=json.dumps({
             'type': 'room_update',
             'gameUpdate': message,
-            'roomInfo': room_info,
+            'roomInfo': data,
         }))
 
     async def ready_update(self, event):
         message = event['message']
         room_info = event['room_info']
+
+        data = {
+            "players": room_info['players'],
+            "gameState": "Updated game state",
+            "allPlayersReady": room_info['all_players_ready'],
+            "turnIndex": room_info['turn_index']
+        }
+
         await self.send(text_data=json.dumps({
             'type': 'ready_update',
             'gameUpdate': message,
-            'roomInfo': room_info,
+            'roomInfo': data,
         }))
 

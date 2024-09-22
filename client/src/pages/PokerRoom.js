@@ -52,6 +52,10 @@ function PokerRoom() {
   });
 
   useEffect(() => {
+    console.log("myVariable changed:", roomInfo);
+  }, [roomInfo]);
+
+  useEffect(() => {
     // Connect to WebSocket when component mounts
     if (isFetching || user == null) return;
     const websocketURL = `ws://localhost:8000/ws/chat/${entry_code}/?username=${encodeURIComponent(
@@ -80,7 +84,7 @@ function PokerRoom() {
         {
           key: messageKey,
           username: data.username,
-          message: data.message,
+          message: data.gameUpdate,
           mine: data.username === user.username,
         },
       ]);
@@ -163,15 +167,17 @@ function PokerRoom() {
         >
           Leave
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={async () => {
-            socket.send(JSON.stringify({ type: "ready" }));
-          }}
-        >
-          Ready?
-        </Button>
+        {!roomInfo?.allPlayersReady && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={async () => {
+              socket.send(JSON.stringify({ type: "ready" }));
+            }}
+          >
+            Ready?
+          </Button>
+        )}
       </div>
       <div className="chat-box">
         <ChatBox chatMessages={chatMessages} socket={socket} />

@@ -141,6 +141,9 @@ def createRoom(request):
 
     data = {
         "players": [],
+        "game_state": [],
+        "all_players_ready": False,
+        "turn_index": 0
     }
 
     cache.set(formatted_random_number, data)
